@@ -1,0 +1,62 @@
+{
+  "continuous_features": [
+    "age",
+    "trestbps",
+    "chol",
+    "thalach",
+    "oldpeak"
+  ],
+  "data_path": "data\\heart_disease.csv",
+  "dataset_columns": 14,
+  "dataset_rows": 918,
+  "feature_columns": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ],
+  "metrics": {
+    "cv_balanced_accuracy_mean": 0.8272442583011689,
+    "cv_balanced_accuracy_std": 0.042608469180029016,
+    "cv_f1_mean": 0.8445226118627399,
+    "cv_f1_std": 0.03166876929310695,
+    "cv_precision_mean": 0.8541183843278979,
+    "cv_precision_std": 0.059687280772847864,
+    "cv_recall_mean": 0.8375188196326409,
+    "cv_recall_std": 0.025741717797632666,
+    "test_balanced_accuracy": 0.8387135341941655,
+    "test_f1": 0.8599033816425121,
+    "test_precision": 0.8476190476190476,
+    "test_recall": 0.8725490196078431
+  },
+  "model_family": "svc",
+  "model_version": "cardiocare-1.0",
+  "random_state": 42,
+  "selected_features": [
+    "age",
+    "trestbps",
+    "chol",
+    "thalach",
+    "oldpeak",
+    "sex_0.0",
+    "sex_1.0",
+    "cp_2.0",
+    "cp_3.0",
+    "cp_4.0",
+    "exang_0.0",
+    "exang_1.0",
+    "thal_3.0",
+    "thal_7.0"
+  ],
+  "selected_run": "baseline_svc",
+  "selection_rationale": "The final model is selected from models within 0.03 balanced-accuracy of the best test result, prioritizing recall to reduce false negatives in a clinical decision-support setting, then F1 and balanced accuracy."
+}

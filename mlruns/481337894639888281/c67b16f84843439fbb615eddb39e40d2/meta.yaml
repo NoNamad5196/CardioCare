@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/nonam/Documents/CardioCare/mlruns/481337894639888281/c67b16f84843439fbb615eddb39e40d2/artifacts
+end_time: 1781725732403
+entry_point_name: ''
+experiment_id: '481337894639888281'
+lifecycle_stage: active
+run_id: c67b16f84843439fbb615eddb39e40d2
+run_name: tuned_svc
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1781725727063
+status: 3
+tags: []
+user_id: nonam

@@ -1,0 +1,9 @@
+{
+  "original_balanced_accuracy": 0.8387135341941655,
+  "drifted_balanced_accuracy": 0.6280487804878049,
+  "delta": -0.21066475370636062,
+  "drifted_features": [
+    "chol",
+    "oldpeak"
+  ]
+}

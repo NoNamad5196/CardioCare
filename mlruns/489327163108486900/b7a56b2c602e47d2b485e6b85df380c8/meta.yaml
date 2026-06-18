@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/nonamad/Documents/CardioCare/mlruns/489327163108486900/b7a56b2c602e47d2b485e6b85df380c8/artifacts
+end_time: 1780065364585
+entry_point_name: ''
+experiment_id: '489327163108486900'
+lifecycle_stage: active
+run_id: b7a56b2c602e47d2b485e6b85df380c8
+run_name: baseline_logistic_regression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1780065362350
+status: 3
+tags: []
+user_id: nonamad

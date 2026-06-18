@@ -1,0 +1,41 @@
+artifact_path: file:///Users/nonamad/Documents/CardioCare/mlruns/489327163108486900/models/m-3095f4431c824929b3dc6af720b1d387/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.14
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+is_signature_from_type_hint: false
+mlflow_version: 3.3.2
+model_id: m-3095f4431c824929b3dc6af720b1d387
+model_size_bytes: 13078864
+model_uuid: m-3095f4431c824929b3dc6af720b1d387
+prompts: null
+run_id: cd12eb8a8e884b78bcf494835be2e8f4
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_example.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "double", "name": "age", "required": true}, {"type": "double",
+    "name": "sex", "required": true}, {"type": "double", "name": "cp", "required":
+    true}, {"type": "double", "name": "trestbps", "required": true}, {"type": "double",
+    "name": "chol", "required": true}, {"type": "double", "name": "fbs", "required":
+    false}, {"type": "double", "name": "restecg", "required": true}, {"type": "double",
+    "name": "thalach", "required": true}, {"type": "double", "name": "exang", "required":
+    true}, {"type": "double", "name": "oldpeak", "required": true}, {"type": "double",
+    "name": "slope", "required": false}, {"type": "double", "name": "ca", "required":
+    false}, {"type": "double", "name": "thal", "required": false}]'
+  outputs: '[{"type": "long", "required": true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-05-29 14:37:14.648932'

@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/nonamad/Documents/CardioCare/mlruns/489327163108486900/e6b200b29ecc4808ac4af460fd44b8ae/artifacts
+end_time: 1780065372649
+entry_point_name: ''
+experiment_id: '489327163108486900'
+lifecycle_stage: active
+run_id: e6b200b29ecc4808ac4af460fd44b8ae
+run_name: baseline_random_forest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1780065370319
+status: 3
+tags: []
+user_id: nonamad

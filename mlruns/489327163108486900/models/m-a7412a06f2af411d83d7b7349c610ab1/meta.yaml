@@ -1,0 +1,10 @@
+artifact_location: file:///Users/nonamad/Documents/CardioCare/mlruns/489327163108486900/models/m-a7412a06f2af411d83d7b7349c610ab1/artifacts
+creation_timestamp: 1780065441546
+experiment_id: '489327163108486900'
+last_updated_timestamp: 1780065443219
+model_id: m-a7412a06f2af411d83d7b7349c610ab1
+model_type: null
+name: model
+source_run_id: 2a804e28bf1c4962a4abbe3f3712103e
+status: 2
+status_message: null

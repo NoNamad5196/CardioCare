@@ -1,179 +1,218 @@
 # CardioCare
 
-CardioCare is an end-to-end machine learning project for binary heart disease prediction using the UCI Heart Disease dataset. It is a clinical decision-support prototype only: it can inform a cardiologist's review, but it must not make diagnosis or treatment decisions by itself.
+CardioCare는 UCI Heart Disease 데이터를 이용해 심장병 가능성을 이진 분류하는 종단간 머신러닝 프로젝트입니다. 이 프로젝트의 목적은 심장 전문의의 판단을 보조하는 것이며, 모델이 진단이나 치료 결정을 단독으로 내리는 시스템이 아닙니다.
 
-## Reproduce
+GitHub 저장소: https://github.com/NoNamad5196/CardioCare
 
-Use Python 3.10 or newer. A virtual environment is recommended so the `python` and `pip` commands below point to the same interpreter.
+## 1. 프로젝트 개요
 
-macOS/Linux:
+- 문제: 환자 임상 지표를 바탕으로 심장병 여부를 예측합니다.
+- 데이터: UCI Heart Disease 데이터셋의 통합 버전, 총 918행과 13개 입력 특성 사용.
+- 타깃: 원래 다중 클래스인 `num` 값을 `0 = 정상`, `1 = 심장병 있음`으로 이진화했습니다.
+- 최종 모델: `SVC`
+- 모델 버전: `cardiocare-1.0`
+- 주요 산출물: 학습 코드, 추론 코드, 모니터링 코드, unittest, Dockerfile, GitHub Actions CI, MLflow 실행 기록, 보고서 자료.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
+## 2. 재현 방법
+
+Python 3.10 이상을 사용합니다. 가상환경 사용을 권장합니다.
 
 Windows PowerShell:
 
 ```powershell
 py -3.10 -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
+
+macOS/Linux:
 
 ```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
-python src/train.py
-python src/inference.py --input data/sample_input.csv
-python -m unittest
-python src/monitor.py
-python src/report.py
-docker build -t cardiocare:1.0 .
 ```
 
-Docker Desktop or another Docker daemon must be running before the `docker build` command.
+전체 파이프라인 실행:
 
-The repository includes `data/heart_disease.csv`. If it is missing, `src/preprocessing.py` downloads the four UCI processed files from:
+```bash
+python src/train.py
+python src/inference.py --input data/sample_input.csv --output artifacts/predictions.csv
+python src/monitor.py
+python src/report_assets.py
+python -m unittest
+```
+
+Docker Desktop 또는 Docker daemon이 실행 중인 상태에서:
+
+```bash
+docker build -t cardiocare:1.0 .
+docker run --rm cardiocare:1.0
+```
+
+## 3. 저장소 구조
+
+```text
+data/
+  heart_disease.csv
+  sample_input.csv
+  raw/
+notebooks/
+  01_eda_preprocessing.ipynb
+src/
+  preprocessing.py
+  train.py
+  inference.py
+  monitor.py
+  report.py
+  report_assets.py
+tests/
+  test_pipeline.py
+artifacts/
+models/
+mlruns/
+report_materials/
+.github/workflows/ci.yml
+Dockerfile
+requirements.txt
+README.md
+report.pdf
+```
+
+## 4. 데이터와 전처리
+
+데이터가 없을 경우 `src/preprocessing.py`가 UCI의 네 개 processed 파일을 내려받아 통합 데이터셋을 생성합니다.
 
 - `processed.cleveland.data`
 - `processed.hungarian.data`
 - `processed.switzerland.data`
 - `processed.va.data`
 
-The multi-class UCI target is binarized as `target = 0` for no disease and `target = 1` for any disease label greater than zero.
+전처리는 scikit-learn `Pipeline`과 `ColumnTransformer`로 구성했습니다. 데이터 누수를 막기 위해 train/test split 이후 학습 fold 안에서만 imputer, scaler, feature selector가 fit됩니다.
 
-## Project Structure
+전처리 방식:
 
-```text
-data/
-notebooks/01_eda_preprocessing.ipynb
-src/preprocessing.py
-src/train.py
-src/inference.py
-src/monitor.py
-src/report.py
-tests/test_pipeline.py
-requirements.txt
-Dockerfile
-.github/workflows/ci.yml
-README.md
-report.pdf
-```
+- 연속형 특성: IQR 기반 clipping, median imputation, `StandardScaler`
+- 범주형/코드형 특성: most-frequent imputation, one-hot encoding
+- 특성 선택: `SelectFromModel(RandomForestClassifier(random_state=42))`
 
-Generated outputs:
+## 5. 학습과 실험 관리
 
-- `models/final_model.pkl`
-- `models/final_model_metadata.json`
-- `mlruns/`
-- `artifacts/model_comparison.csv`
-- `artifacts/*_confusion_matrix.csv`
-- `artifacts/drift_report.csv`
-- `artifacts/drift_performance_timeseries.png`
-- `logs/inference.log`
-- `logs/monitor.log`
-
-## Data Leakage Controls
-
-All learned transformations are inside sklearn `Pipeline` objects. The code splits data first with `train_test_split(test_size=0.2, stratify=y, random_state=42)`, then fits preprocessing inside cross-validation folds and the final train split only.
-
-The model pipeline order is:
-
-```text
-ColumnTransformer preprocessing
--> SelectFromModel(RandomForestClassifier(random_state=42))
--> classifier
-```
-
-Continuous features use train-fold IQR clipping, median imputation, and `StandardScaler`. Categorical-coded features use most-frequent imputation and one-hot encoding. `StandardScaler` is never fit on test data.
-
-## Training and MLflow
-
-`python src/train.py` trains and compares:
+`src/train.py`는 다음 모델을 학습하고 비교합니다.
 
 - Logistic Regression
 - SVC
 - Random Forest
 
-Each model run logs parameters, 5-fold CV metrics, test metrics, selected features, confusion matrix artifacts, and the fitted model artifact to MLflow. At least one strongest baseline candidate is tuned with `GridSearchCV`.
+각 실행은 MLflow에 파라미터, 5-fold cross-validation 지표, test 지표, confusion matrix, 선택된 특성, 학습 모델 artifact를 기록합니다. 강한 후보 모델에 대해서는 `GridSearchCV` 기반 하이퍼파라미터 탐색도 수행합니다.
 
-Reported metrics:
+최종 선택 기준은 임상적 의사결정 보조 맥락을 반영해 balanced accuracy가 최고 성능에서 0.03 이내인 모델 중 recall을 우선하고, 그 다음 F1과 balanced accuracy를 봅니다. false negative는 실제 질환 가능성이 있는 환자를 놓치는 경우라서 특히 중요하게 다뤘습니다.
 
-- balanced accuracy
-- precision
-- recall
-- F1
-- confusion matrix
+최종 모델 성능:
 
-Final model selection prioritizes recall among candidates within 0.03 balanced accuracy of the best test result, then F1, then balanced accuracy. This reflects the clinical cost of false negatives.
+| 항목 | 값 |
+| --- | ---: |
+| selected run | `baseline_svc` |
+| balanced accuracy | 0.8387 |
+| precision | 0.8476 |
+| recall | 0.8725 |
+| F1 | 0.8599 |
 
-## Inference
+## 6. 추론
 
 ```bash
 python src/inference.py --input data/sample_input.csv --output artifacts/predictions.csv
 ```
 
-The input CSV must contain the 13 feature columns. If a `target` column is present, it is copied into the output and included in the inference log.
+입력 CSV에는 13개 feature column이 필요합니다. `target` column이 있으면 결과 파일과 로그에 함께 보존됩니다.
 
-Logged fields include timestamp, model version, input shape, predictions, and actual labels when available.
+추론 로그에는 다음 항목이 저장됩니다.
 
-## Monitoring
+- timestamp
+- model version
+- input shape
+- predictions
+- 실제 정답이 있는 경우 actual labels
 
-```bash
-python src/monitor.py
-```
+## 7. 테스트와 CI
 
-Monitoring recreates the deterministic train/test split, shifts cholesterol and oldpeak in a test-set copy, and runs `scipy.stats.ks_2samp` for each continuous feature. Features with `p < 0.05` are flagged for drift.
-
-The script saves:
-
-- `artifacts/drift_report.csv`
-- `artifacts/drift_performance_comparison.csv`
-- `artifacts/performance_timeseries.csv`
-- `artifacts/drift_performance_timeseries.png`
-- `logs/monitor.log`
-
-## Tests and CI
+테스트 실행:
 
 ```bash
 python -m unittest
 ```
 
-The unittest suite checks:
+`tests/test_pipeline.py`는 다음을 검증합니다.
 
-- prediction shape matches input rows
-- predicted probabilities are in `[0, 1]` and sum to 1 per row
-- invalid cholesterol range is rejected
-- fixed-seed pipeline predictions are deterministic
+- 예측 결과 shape가 입력 행 수와 일치하는지
+- 예측 확률이 `[0, 1]` 범위에 있고 각 행의 합이 1에 가까운지
+- `chol` 값이 임상적으로 허용한 범위를 벗어나면 검증 오류가 나는지
+- 고정 시드에서 같은 입력이 같은 예측을 내는지
 
-GitHub Actions runs the unit tests on every push and pull request using Python 3.10.
+GitHub Actions 설정은 `.github/workflows/ci.yml`에 있으며, push와 pull request마다 Python 3.10 환경에서 `python -m unittest`를 실행합니다.
 
-## Docker
+## 8. 모니터링과 드리프트
 
-Build:
+```bash
+python src/monitor.py
+```
+
+`src/monitor.py`는 deterministic train/test split을 다시 만들고, test set 복사본에서 `chol`과 `oldpeak` 분포를 인위적으로 이동시킵니다. 이후 연속형 특성별로 `scipy.stats.ks_2samp`를 적용해 `p < 0.05`이면 drift로 표시합니다.
+
+드리프트 결과:
+
+| feature | drift flag |
+| --- | --- |
+| chol | True |
+| oldpeak | True |
+| age | False |
+| trestbps | False |
+| thalach | False |
+
+성능 비교:
+
+- 원본 test balanced accuracy: 0.8387
+- drifted test balanced accuracy: 0.6280
+
+## 9. Docker
+
+`Dockerfile`은 `python:3.10-slim` 기반으로 의존성을 설치하고, 저장된 모델로 샘플 입력 추론을 실행합니다.
 
 ```bash
 docker build -t cardiocare:1.0 .
-```
-
-Run:
-
-```bash
 docker run --rm cardiocare:1.0
 ```
 
-The image runs batch inference on `data/sample_input.csv` using `models/final_model.pkl`.
+컨테이너 실행 시 `data/sample_input.csv`를 입력으로 사용하고 `artifacts/docker_predictions.csv`에 결과를 저장합니다.
 
-## Feature Store and Registry Notes
+## 10. 보고서 자료
 
-A useful feature-store candidate is `thalach` because maximum heart rate is repeatedly used during training, inference, and drift monitoring. Keeping it in a feature store would make schema, freshness, and validation checks explicit.
+보고서 작성용 표, 그림, CSV, JSON 자료는 `report_materials/`에 정리되어 있습니다.
 
-A model-registry metadata field that should be recorded is `selected_features`. It explains what transformed features survived `SelectFromModel`, supports auditability, and helps reviewers compare model versions beyond headline metrics.
+주요 파일:
 
-## Serving and Retraining Strategy
+- `report_materials/CardioCare_report_materials.zip`
+- `report_materials/01_eda_summary.png`
+- `report_materials/02_model_comparison_table.png`
+- `report_materials/03_drift_report_table.png`
+- `report_materials/04_drift_performance_table.png`
+- `report_materials/model_comparison.csv`
+- `report_materials/final_model_metadata.json`
+- `report_materials/drift_report.csv`
+- `report_materials/drift_performance_comparison.csv`
 
-For this project, Model-as-a-Service is preferred over on-device serving. It simplifies audit logging, version rollback, and monitoring. PHI protection would require encrypted transport, strict access control, and minimal retention.
+## 11. Feature Store와 Model Registry 메모
 
-Retraining should happen after confirmed drift plus human-reviewed labels, sustained performance degradation, or a scheduled review. Human-in-the-loop review is required before model promotion to avoid feedback loops where model-influenced decisions contaminate future labels.
+Feature Store 후보로는 `thalach`가 적절합니다. 최대 심박수는 학습, 추론, 드리프트 모니터링에서 반복적으로 사용되므로 schema, freshness, validation을 명시적으로 관리할 가치가 있습니다.
 
-## Ethics
+Model Registry에 기록해야 할 주요 메타데이터는 `selected_features`입니다. 어떤 변환 특성이 최종적으로 살아남았는지 남겨야 모델 버전 간 비교와 감사 가능성이 좋아집니다.
 
-CardioCare is an educational prototype built from a small, dated public dataset. It can surface risk signals, but it cannot replace clinical judgment. False negatives are especially important because they may delay needed follow-up care.
+## 12. 서빙과 재학습 전략
+
+이 프로젝트에서는 on-device serving보다 Model-as-a-Service가 더 적합하다고 판단했습니다. 서버 기반 서빙은 모델 업데이트, rollback, 감사 로그, 모니터링을 중앙에서 관리하기 쉽습니다. 단, 실제 의료 환경에서는 PHI 보호를 위해 암호화된 전송, 엄격한 접근 제어, 최소 보존 정책이 필요합니다.
+
+재학습은 단순히 drift가 한 번 감지되었다는 이유만으로 자동 수행하지 않습니다. drift 감지, 성능 저하, 사람의 검토를 거친 새로운 label 확보가 함께 확인될 때 재학습 후보로 올리고, 모델 promotion 전에는 Human-in-the-loop 검토가 필요합니다.
+
+## 13. 한계와 윤리
+
+CardioCare는 오래된 공개 데이터셋을 기반으로 한 교육용 prototype입니다. 실제 임상 적용에는 외부 검증, calibration, 공정성 분석, 개인정보 보호 설계, 의료진 검토 절차가 추가로 필요합니다. 모델은 위험 신호를 알릴 수는 있지만, 진단과 치료 결정을 대신해서는 안 됩니다.

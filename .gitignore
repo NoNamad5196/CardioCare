@@ -8,3 +8,4 @@ __pycache__/
 tmp/
 logs/*.log
 CardioCare_claude_eval.zip
+report_materials/

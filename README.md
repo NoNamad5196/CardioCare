@@ -11,7 +11,7 @@ GitHub 저장소: https://github.com/NoNamad5196/CardioCare
 - 타깃: 원래 다중 클래스인 `num` 값을 `0 = 정상`, `1 = 심장병 있음`으로 이진화했습니다.
 - 최종 모델: `SVC`
 - 모델 버전: `cardiocare-1.0`
-- 주요 산출물: 학습 코드, 추론 코드, 모니터링 코드, unittest, Dockerfile, GitHub Actions CI, MLflow 실행 기록, 보고서 자료.
+- 주요 산출물: 학습 코드, 추론 코드, 모니터링 코드, unittest, Dockerfile, GitHub Actions CI, MLflow 실행 기록, 최종 보고서.
 
 ## 2. 재현 방법
 
@@ -39,7 +39,6 @@ python -m pip install -r requirements.txt
 python src/train.py
 python src/inference.py --input data/sample_input.csv --output artifacts/predictions.csv
 python src/monitor.py
-python src/report_assets.py
 python -m unittest
 ```
 
@@ -65,13 +64,11 @@ src/
   inference.py
   monitor.py
   report.py
-  report_assets.py
 tests/
   test_pipeline.py
 artifacts/
 models/
 mlruns/
-report_materials/
 .github/workflows/ci.yml
 Dockerfile
 requirements.txt
@@ -185,34 +182,18 @@ docker run --rm cardiocare:1.0
 
 컨테이너 실행 시 `data/sample_input.csv`를 입력으로 사용하고 `artifacts/docker_predictions.csv`에 결과를 저장합니다.
 
-## 10. 보고서 자료
-
-보고서 작성용 표, 그림, CSV, JSON 자료는 `report_materials/`에 정리되어 있습니다.
-
-주요 파일:
-
-- `report_materials/CardioCare_report_materials.zip`
-- `report_materials/01_eda_summary.png`
-- `report_materials/02_model_comparison_table.png`
-- `report_materials/03_drift_report_table.png`
-- `report_materials/04_drift_performance_table.png`
-- `report_materials/model_comparison.csv`
-- `report_materials/final_model_metadata.json`
-- `report_materials/drift_report.csv`
-- `report_materials/drift_performance_comparison.csv`
-
-## 11. Feature Store와 Model Registry 메모
+## 10. Feature Store와 Model Registry 메모
 
 Feature Store 후보로는 `thalach`가 적절합니다. 최대 심박수는 학습, 추론, 드리프트 모니터링에서 반복적으로 사용되므로 schema, freshness, validation을 명시적으로 관리할 가치가 있습니다.
 
 Model Registry에 기록해야 할 주요 메타데이터는 `selected_features`입니다. 어떤 변환 특성이 최종적으로 살아남았는지 남겨야 모델 버전 간 비교와 감사 가능성이 좋아집니다.
 
-## 12. 서빙과 재학습 전략
+## 11. 서빙과 재학습 전략
 
 이 프로젝트에서는 on-device serving보다 Model-as-a-Service가 더 적합하다고 판단했습니다. 서버 기반 서빙은 모델 업데이트, rollback, 감사 로그, 모니터링을 중앙에서 관리하기 쉽습니다. 단, 실제 의료 환경에서는 PHI 보호를 위해 암호화된 전송, 엄격한 접근 제어, 최소 보존 정책이 필요합니다.
 
 재학습은 단순히 drift가 한 번 감지되었다는 이유만으로 자동 수행하지 않습니다. drift 감지, 성능 저하, 사람의 검토를 거친 새로운 label 확보가 함께 확인될 때 재학습 후보로 올리고, 모델 promotion 전에는 Human-in-the-loop 검토가 필요합니다.
 
-## 13. 한계와 윤리
+## 12. 한계와 윤리
 
 CardioCare는 오래된 공개 데이터셋을 기반으로 한 교육용 prototype입니다. 실제 임상 적용에는 외부 검증, calibration, 공정성 분석, 개인정보 보호 설계, 의료진 검토 절차가 추가로 필요합니다. 모델은 위험 신호를 알릴 수는 있지만, 진단과 치료 결정을 대신해서는 안 됩니다.
